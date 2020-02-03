@@ -117,5 +117,22 @@ class LineBotLibrary extends LINEBot {
         return json_decode($result);
 		
     }
+
+    public static function setRichMenu ($access_token,$richMenu_id) {
+		
+        $ch = curl_init('https://api.line.me/v2/bot/user/all/richmenu/'.$richMenu_id);
+        
+        
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Authorization: Bearer ' . $access_token ]);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return json_decode($result);
+		
+    }
 	
 }
