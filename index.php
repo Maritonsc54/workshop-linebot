@@ -7,8 +7,24 @@
 
     $bot = new LineBotLibrary($channelSecret, $access_token);
     if (!empty($bot->isEvents)) {
-        
-        $bot->replyMessageNew($bot->replyToken, $bot->message->text);
+        $getId = $bot->message->id;
+        $getMessage = strtolower($bot->message->text);
+        $getType =  $bot->message->type;
+
+        if($getId != "" && $getType == "text" ){
+            switch ($getMessage) {
+                case "campaign-active":
+                    $bot->replyMessageNew($bot->replyToken, 'active===>'.$getMessage);
+                    break;
+                case "campaign-inactive":
+                    $bot->replyMessageNew($bot->replyToken, 'inactive===>'.$getMessage);
+                    break;
+                default:
+                    $bot->replyMessageNew($bot->replyToken, $bot->message);
+            }
+        }
+
+        // $bot->replyMessageNew($bot->replyToken, $bot->message->text);
 
         // Succeeded
         if ($bot->isSuccess()) { echo 'Succeeded!'; exit(); }
