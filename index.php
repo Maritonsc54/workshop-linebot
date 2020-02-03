@@ -139,15 +139,16 @@
                         ]
                       ];
 
-                    // $data = [
-                    //     'replyToken' => $reply_token,
-                    //     'messages' => [$jsonFlex]
-                    // ];
+                    $data = [
+                        'replyToken' => $bot->replyToken,
+                        'messages' => [$jsonFlex]
+                    ];
             
                     // print_r($data);
             
-                    $post_body = json_encode($jsonFlex, JSON_UNESCAPED_UNICODE);
-                    $bot->replyMessageNew($bot->replyToken,  $post_body );
+                    $post_body = json_encode($data, JSON_UNESCAPED_UNICODE);
+                    $send_result = send_reply_message('https://api.line.me/v2/bot/message/reply', $POST_HEADER, $post_body);
+
                     break;
                 case "campaign:inactive":
                     $bot->replyMessageNew($bot->replyToken, 'inactive===>'.$getMessage);
