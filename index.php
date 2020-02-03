@@ -1,221 +1,132 @@
 <?php
 
-// Using shell_exec for better understandability. Use cURL or other http client for production environment.
+	require('PushmessageClass.php');
+	require('SendmessageClass.php') ;
 
-require_once __DIR__ . '/vendor/autoload.php';
+	$tempush = new PushmessageClass();
+	$sendmsg = new SendmessageClass();
+	
+    //$accessToken = "eyJhbGciOiJIUzI1NiJ9.UFWcrQH1jMyi3gPzq-WsOclipRRJqbctbksu5wjz9cXyCWMRb_wMEyyA9t3NA84sgQ27e0HRLErYLi-RFgireLnDpxvnGs7LZspA7PoKvR8U8oavJwefuO35V4utaE4VSBZVo27Lr3dMeNrmsHt0oXKaDLZrpinCCl0vGq_zOok.lcKWyUj-K7i-ANwbTfEnVl8889TB-bIhrAarge5hm5o";
+    $accessToken = "3ckym0tOjI/vnueETubwqk2XibSK3Ydt63cEFos2UZqmEBzLl0zWcAsXOc7SzpdYUubGw+lNTxn2Q3ywndT4G94EtevAfLNj8TMTJA/az5KJmKu/GIz/y1xgaJe7+TcQaf0fMBgAa0poVIqXs40K0gdB04t89/1O/w1cDnyilFU=";
+	$content = file_get_contents('php://input');
+    $arrayJson = json_decode($content, true);
+    
+    $arrayHeader = array();
+    $arrayHeader[] = "Content-Type: application/json";
+    $arrayHeader[] = "Authorization: Bearer {$accessToken}";
 
-$CHANNEL_ACCESS_TOKEN = "3ckym0tOjI/vnueETubwqk2XibSK3Ydt63cEFos2UZqmEBzLl0zWcAsXOc7SzpdYUubGw+lNTxn2Q3ywndT4G94EtevAfLNj8TMTJA/az5KJmKu/GIz/y1xgaJe7+TcQaf0fMBgAa0poVIqXs40K0gdB04t89/1O/w1cDnyilFU=";
-$CHANNEL_SECRET = "067ef242eec79c066cdef6793f2f0488";
 
-$httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient($CHANNEL_ACCESS_TOKEN );
-$bot = new \LINE\LINEBot($httpClient, ['channelSecret' => $CHANNEL_SECRET]);
-$signature = $_SERVER['HTTP_' . \LINE\LINEBot\Constant\HTTPHeader::LINE_SIGNATURE];
+	if(isset($arrayJson['events'][0]['source']['userId'])){
+		$id_type ="userId";
+        $id = $arrayJson['events'][0]['source']['userId'];
+	}else if(isset($arrayJson['events'][0]['source']['groupId'])){
+		$id_type ="groupId";
+		$id = $arrayJson['events'][0]['source']['groupId'];
+	}else if(isset($arrayJson['events'][0]['source']['room'])){
+		$id_type ="room";
+		$id = $arrayJson['events'][0]['source']['room'];
+	}
+	
+	//get message reply
+    $message = strtolower($arrayJson['events'][0]['message']['text']);
 
-
-$events = $bot->parseEventRequest(file_get_contents('php://input'), $signature);
-echo print_r($events);
-exit;
-foreach ($events as $event) {
-
-  if ($event instanceof \LINE\LINEBot\Event\MessageEvent) {
-    if($event instanceof \LINE\LINEBot\Event\MessageEvent\TextMessage) {
-
-      if($event->getText() === 'create') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(createNewRichmenu($CHANNEL_ACCESS_TOKEN )));
-      }
-      else if($event->getText() === 'list') {
-        $result = getListOfRichmenu($CHANNEL_ACCESS_TOKEN );
-
-        if(isset($result['richmenus']) && count($result['richmenus']) > 0) {
-          $builders = new \LINE\LINEBot\MessageBuilder\MultiMessageBuilder();
-          $columns = Array();
-          for($i = 0; $i < count($result['richmenus']); $i++) {
-            $richmenu = $result['richmenus'][$i];
-            $actionArray = array();
-            array_push($actionArray, new LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder (
-              'upload image', 'upload::' . $richmenu['richMenuId']));
-            array_push($actionArray, new LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder (
-              'delete', 'delete::' . $richmenu['richMenuId']));
-            array_push($actionArray, new LINE\LINEBot\TemplateActionBuilder\MessageTemplateActionBuilder (
-              'link', 'link::' . $richmenu['richMenuId']));
-            $column = new \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselColumnTemplateBuilder (
-              null,
-              $richmenu['richMenuId'],
-              null,
-              $actionArray
-            );
-            array_push($columns, $column);
-
-            if($i == 4 || $i == count($result['richmenus']) - 1) {
-              $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder(
-                'Richmenu',
-                new \LINE\LINEBot\MessageBuilder\TemplateBuilder\CarouselTemplateBuilder($columns)
-              );
-              $builders->add($builder);
-
-              unset($columns);
-              $columns = Array();
-            }
-          }
-          $bot->replyMessage($event->getReplyToken(), $builders);
-        }
-        else {
-          $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder('No richmenu.'));
-        }
-      }
-      else if($event->getText() === 'unlink') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(unlinkFromUser($CHANNEL_ACCESS_TOKEN , $event->getUserId())));
-      }
-      else if($event->getText() === 'check') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(checkRichmenuOfUser($CHANNEL_ACCESS_TOKEN , $event->getUserId())));
-      }
-      else if(substr($event->getText(),0, 8) === 'upload::') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(uploadRandomImageToRichmenu($CHANNEL_ACCESS_TOKEN , substr($event->getText(), 8))));
-      }
-      else if(substr($event->getText(),0, 8) === 'delete::') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(deleteRichmenu($CHANNEL_ACCESS_TOKEN , substr($event->getText(), 8))));
-      }
-      else if(substr($event->getText(),0, 6) === 'link::') {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(linkToUser($CHANNEL_ACCESS_TOKEN , $event->getUserId(), substr($event->getText(), 6))));
-      }
-      else {
-        $bot->replyMessage($event->getReplyToken(),new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(
-          '"create" - create new Richmenu to channel.' . PHP_EOL .
-          '"list" - show all Richmenu created via API' . PHP_EOL .
-          '"list > upload" - upload image to Richmenu. Image choosen randomly' . PHP_EOL .
-          '"list > delete" - delete Richmenu' . PHP_EOL .
-          '"list > link" - link Richmenu to user(you)' . PHP_EOL .
-          '"unlink" - remove link to Richmenu of user(you)' . PHP_EOL .
-          '"check" - show Richmenu ID linked to user(you)' . PHP_EOL
-        ));
-      }
+	#ตัวอย่าง Message Type "Text"
+    if($message == "campaign"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "text";
+        $arrayPostData['messages'][0]['text'] = $arrayJson['events'][0]['replyToken'];
+        $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+	
+        replyMsg($arrayHeader,$arrayPostData);
+    }else if($message == "จำนวนสิทธิ์คงเหลือ"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "text";
+        $arrayPostData['messages'][0]['text'] = $arrayJson['events'][0]['replyToken'];
+        $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+	}else if($message == "ผู้ใช้สิทธิ์ทั้งหมด"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "text";
+        $arrayPostData['messages'][0]['text'] = $arrayJson['events'][0]['replyToken'];
+        $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+    }else if($message == "gpc"){
+		$sendmsg->pushMsg($arrayHeader,$tempush->campaign_use($id , $message));
+    }else if($message == "1"){
+		$sendmsg->pushMsg($arrayHeader,$tempush->flex_button($id));
     }
-  }
-}
-
-exit;
-function createNewRichmenu($channelAccessToken) {
-  $sh = <<< EOF
-  curl -X POST \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  -H 'Content-Type:application/json' \
-  -d '{"size": {"width": 2500,"height": 1686},"selected": false,"name": "Controller","chatBarText": "Controller","areas": [{"bounds": {"x": 551,"y": 325,"width": 321,"height": 321},"action": {"type": "message","text": "up"}},{"bounds": {"x": 876,"y": 651,"width": 321,"height": 321},"action": {"type": "message","text": "right"}},{"bounds": {"x": 551,"y": 972,"width": 321,"height": 321},"action": {"type": "message","text": "down"}},{"bounds": {"x": 225,"y": 651,"width": 321,"height": 321},"action": {"type": "message","text": "left"}},{"bounds": {"x": 1433,"y": 657,"width": 367,"height": 367},"action": {"type": "message","text": "btn b"}},{"bounds": {"x": 1907,"y": 657,"width": 367,"height": 367},"action": {"type": "message","text": "btn a"}}]}' https://api.line.me/v2/bot/richmenu;
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['richMenuId'])) {
-    return $result['richMenuId'];
-  }
-  else {
-    return $result['message'];
-  }
-}
-
-function getListOfRichmenu($channelAccessToken) {
-  $sh = <<< EOF
-  curl \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  https://api.line.me/v2/bot/richmenu/list;
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  return $result;
-}
-
-function checkRichmenuOfUser($channelAccessToken, $userId) {
-  $sh = <<< EOF
-  curl \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  https://api.line.me/v2/bot/user/$userId/richmenu
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['richMenuId'])) {
-    return $result['richMenuId'];
-  }
-  else {
-    return $result['message'];
-  }
-}
-
-function unlinkFromUser($channelAccessToken, $userId) {
-  $sh = <<< EOF
-  curl -X DELETE \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  https://api.line.me/v2/bot/user/$userId/richmenu
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['message'])) {
-    return $result['message'];
-  }
-  else {
-    return 'success';
-  }
-}
-
-function deleteRichmenu($channelAccessToken, $richmenuId) {
-  if(!isRichmenuIdValid($richmenuId)) {
-    return 'invalid richmenu id';
-  }
-  $sh = <<< EOF
-  curl -X DELETE \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  https://api.line.me/v2/bot/richmenu/$richmenuId
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['message'])) {
-    return $result['message'];
-  }
-  else {
-    return 'success';
-  }
-}
-
-function linkToUser($channelAccessToken, $userId, $richmenuId) {
-  if(!isRichmenuIdValid($richmenuId)) {
-    return 'invalid richmenu id';
-  }
-  $sh = <<< EOF
-  curl -X POST \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  -H 'Content-Length: 0' \
-  https://api.line.me/v2/bot/user/$userId/richmenu/$richmenuId
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['message'])) {
-    return $result['message'];
-  }
-  else {
-    return 'success';
-  }
-}
-
-function uploadRandomImageToRichmenu($channelAccessToken, $richmenuId) {
-  if(!isRichmenuIdValid($richmenuId)) {
-    return 'invalid richmenu id';
-  }
-  $randomImageIndex = rand(1, 5);
-  $imagePath = realpath('') . '/' . 'controller_0' . $randomImageIndex . '.png';
-  $sh = <<< EOF
-  curl -X POST \
-  -H 'Authorization: Bearer $channelAccessToken' \
-  -H 'Content-Type: image/png' \
-  -H 'Expect:' \
-  -T $imagePath \
-  https://api.line.me/v2/bot/richmenu/$richmenuId/content
-EOF;
-  $result = json_decode(shell_exec(str_replace('\\', '', str_replace(PHP_EOL, '', $sh))), true);
-  if(isset($result['message'])) {
-    return $result['message'];
-  }
-  else {
-    return 'success. Image #0' . $randomImageIndex . ' has uploaded onto ' . $richmenuId;
-  }
-}
-
-function isRichmenuIdValid($string) {
-  if(preg_match('/^[a-zA-Z0-9-]+$/', $string)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
+	
+	
+	
+    //#ตัวอย่าง Message Type "Sticker"
+    else if($message == "ฝันดี"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "sticker";
+        $arrayPostData['messages'][0]['packageId'] = "2";
+        $arrayPostData['messages'][0]['stickerId'] = "46";
+         $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+    }
+    #ตัวอย่าง Message Type "Image"
+    else if($message == "รูปน้องแมว"){
+        $image_url = "https://i.pinimg.com/originals/cc/22/d1/cc22d10d9096e70fe3dbe3be2630182b.jpg";
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "image";
+        $arrayPostData['messages'][0]['originalContentUrl'] = $image_url;
+        $arrayPostData['messages'][0]['previewImageUrl'] = $image_url;
+         $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+    }
+    #ตัวอย่าง Message Type "Location"
+    else if($message == "พิกัดสยามพารากอน"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "location";
+        $arrayPostData['messages'][0]['title'] = "สยามพารากอน";
+        $arrayPostData['messages'][0]['address'] =   "13.7465354,100.532752";
+        $arrayPostData['messages'][0]['latitude'] = "13.7465354";
+        $arrayPostData['messages'][0]['longitude'] = "100.532752";
+         $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+    }
+    #ตัวอย่าง Message Type "Text + Sticker ใน 1 ครั้ง"
+    else if($message == "ลาก่อน"){
+        $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "text";
+        $arrayPostData['messages'][0]['text'] = "อย่าทิ้งกันไป";
+        $arrayPostData['messages'][1]['type'] = "sticker";
+        $arrayPostData['messages'][1]['packageId'] = "1";
+        $arrayPostData['messages'][1]['stickerId'] = "131";
+         $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+    }else{
+		$arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
+        $arrayPostData['messages'][0]['type'] = "sticker";
+        $arrayPostData['messages'][0]['packageId'] = "1";
+        $arrayPostData['messages'][0]['stickerId'] = "131";
+         $sendmsg->replyMsg($arrayHeader,$arrayPostData);
+	}
+	
+/*	function replyMsg($arrayHeader,$arrayPostData){
+        $strUrl = "https://api.line.me/v2/bot/message/reply";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,$strUrl);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $arrayHeader);    
+        curl_setopt($ch, CURLOPT_POSTFIELDS,json_encode($arrayPostData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		$result = curl_exec($ch);
+        curl_close ($ch);
+    }
+	
+	function pushMsg($arrayHeader,$arrayPostData){
+        $strUrl = "https://api.line.me/v2/bot/message/push ";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,$strUrl);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $arrayHeader);    
+        curl_setopt($ch, CURLOPT_POSTFIELDS,json_encode($arrayPostData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		$result = curl_exec($ch);
+        curl_close ($ch);
+    }
+*/
+   exit();
 ?>
