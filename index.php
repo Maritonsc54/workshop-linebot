@@ -1,10 +1,10 @@
 <?php
 
-	require('PushmessageClass.php');
-	require('SendmessageClass.php') ;
+	// require('PushmessageClass.php');
+	// require('SendmessageClass.php') ;
 
-	$tempush = new PushmessageClass();
-	$sendmsg = new SendmessageClass();
+	// $tempush = new PushmessageClass();
+	// $sendmsg = new SendmessageClass();
 	
     //$accessToken = "eyJhbGciOiJIUzI1NiJ9.UFWcrQH1jMyi3gPzq-WsOclipRRJqbctbksu5wjz9cXyCWMRb_wMEyyA9t3NA84sgQ27e0HRLErYLi-RFgireLnDpxvnGs7LZspA7PoKvR8U8oavJwefuO35V4utaE4VSBZVo27Lr3dMeNrmsHt0oXKaDLZrpinCCl0vGq_zOok.lcKWyUj-K7i-ANwbTfEnVl8889TB-bIhrAarge5hm5o";
     $accessToken = "3ckym0tOjI/vnueETubwqk2XibSK3Ydt63cEFos2UZqmEBzLl0zWcAsXOc7SzpdYUubGw+lNTxn2Q3ywndT4G94EtevAfLNj8TMTJA/az5KJmKu/GIz/y1xgaJe7+TcQaf0fMBgAa0poVIqXs40K0gdB04t89/1O/w1cDnyilFU=";
