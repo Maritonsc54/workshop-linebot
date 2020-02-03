@@ -29,7 +29,8 @@
 	
 	//get message reply
     $message = strtolower($arrayJson['events'][0]['message']['text']);
-
+print_r($message);
+exit;
 	#ตัวอย่าง Message Type "Text"
     if($message == "campaign"){
         $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
