@@ -4,9 +4,9 @@ $accessToken = "3ckym0tOjI/vnueETubwqk2XibSK3Ydt63cEFos2UZqmEBzLl0zWcAsXOc7SzpdY
 
 $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient($accessToken);
 $bot = new \LINE\LINEBot($httpClient, ['channelSecret' => '067ef242eec79c066cdef6793f2f0488']);
-$imagePath = 'controller_01.png';
+$imagePath = 'richmenu-template-guide-01.png';
 $contentType = 'image/jpeg';
-$response = $bot->uploadRichMenuImage('richmenu-25234417fa327bb9b832a8e4d1b22f69', $imagePath, $contentType);
+$response = $bot->uploadRichMenuImage('richmenu-82739ab1296eeb62edf97e4326a3c56a', $imagePath, $contentType);
 
 print_r($response)
 ?>
