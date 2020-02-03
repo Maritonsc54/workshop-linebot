@@ -6,7 +6,7 @@ $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient($accessToken);
 $bot = new \LINE\LINEBot($httpClient, ['channelSecret' => '067ef242eec79c066cdef6793f2f0488']);
 $imagePath = 'controller_01.png';
 $contentType = 'image/jpeg';
-$response = $bot->uploadRichMenuImage('richmenu-25234417fa327bb9b832a8e4d1b22f69/content ', $imagePath, $contentType);
+$response = $bot->uploadRichMenuImage('richmenu-25234417fa327bb9b832a8e4d1b22f69', $imagePath, $contentType);
 
 print_r($response)
 ?>
