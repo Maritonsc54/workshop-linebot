@@ -11,9 +11,10 @@ $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient($CHANNEL_ACCESS_TOKEN 
 $bot = new \LINE\LINEBot($httpClient, ['channelSecret' => $CHANNEL_SECRET]);
 $signature = $_SERVER['HTTP_' . \LINE\LINEBot\Constant\HTTPHeader::LINE_SIGNATURE];
 
-// echo "success";
-// exit;
+
 $events = $bot->parseEventRequest(file_get_contents('php://input'), $signature);
+echo print_r($events);
+exit;
 foreach ($events as $event) {
 
   if ($event instanceof \LINE\LINEBot\Event\MessageEvent) {
@@ -92,6 +93,7 @@ foreach ($events as $event) {
   }
 }
 
+exit;
 function createNewRichmenu($channelAccessToken) {
   $sh = <<< EOF
   curl -X POST \
