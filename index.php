@@ -31,7 +31,7 @@
 
     $arrayPostData['replyToken'] = $arrayJson['events'][0]['replyToken'];
     $arrayPostData['messages'][0]['type'] = "text";
-    $arrayPostData['messages'][0]['text'] = $arrayJson['events'][0]['source']['userId'];
+    $arrayPostData['messages'][0]['text'] = $arrayJson['events'][0];
     $sendmsg->replyMsg($arrayHeader,$arrayPostData);
 
 ?>
