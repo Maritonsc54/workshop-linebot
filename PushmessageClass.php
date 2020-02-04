@@ -1,13 +1,12 @@
 <?php
 
-require('SqlqueryClass.php') ;
+// require('SqlqueryClass.php') ;
 
 class PushmessageClass
 {
 	
 	public function campaign_use($id , $prefix){
 		$request = new SqlqueryClass;
-		
 		$campaign[] = $request->campaign_by_prefix(strtoupper($prefix));
 		foreach($campaign as $result){
 			$campaign_use = $request->campaign_use($result["prefix"],$result["date_start"],$result["date_end"]);
