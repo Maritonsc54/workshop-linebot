@@ -18,6 +18,7 @@
         $getType =  $bot->message->type;
 
         if($getId != "" && $getType == "text" ){
+            $bot->replyMessageNew($bot->replyToken, $bot);
             switch ($getMessage) {
                 case "campaign:active":
                     $bot->replyMessageNew($bot->replyToken, 'active===>'.$getMessage);
